@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'react-toastify/dist/ReactToastify.css';
+
+/* Custom toast styling */
+.Toastify__toast {
+  @apply bg-dark-surface border border-dark-card rounded-lg;
+}
+
+.Toastify__toast--success {
+  @apply border-secondary-500;
+}
+
+.Toastify__toast--error {
+  @apply border-red-500;
+}
+
+.Toastify__toast--info {
+  @apply border-primary-500;
+}
+
+.Toastify__toast--warning {
+  @apply border-accent-500;
+}
+
+.Toastify__toast-body {
+  @apply text-dark-text font-medium;
+}
+
+.Toastify__close-button {
+  @apply text-dark-muted hover:text-dark-text;
+}
+
+.Toastify__progress-bar {
+  @apply bg-gradient-to-r from-primary-500 to-secondary-500;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dark-card rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary-500;
+}
+
+/* Game iframe styling */
+.game-iframe {
+  border: none;
+  border-radius: 12px;
+  background: #000;
+}
+
+/* Star rating styling */
+.star-rating {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+}
+
+.star:hover {
+  transform: scale(1.1);
+}
+
+/* Game card hover effects */
+.game-card {
+  transition: all 0.3s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Loading shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #374151 0px, #4B5563 40px, #374151 80px);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* AdSense container styling */
+.adsense-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100px;
+  background: rgba(55, 65, 81, 0.3);
+  border: 1px dashed rgba(156, 163, 175, 0.3);
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+/* Gradient text effect */
+.gradient-text {
+  background: linear-gradient(135deg, #3B82F6, #10B981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Button glow effect */
+.btn-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+/* Modal backdrop blur */
+.modal-backdrop {
+  backdrop-filter: blur(8px);
+  background: rgba(17, 24, 39, 0.8);
+}
+
+/* Game thumbnail overlay */
+.game-thumbnail {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-thumbnail::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.game-thumbnail:hover::after {
+  opacity: 1;
+}
+
+/* Form input focus effects */
+.form-input:focus {
+  @apply ring-2 ring-primary-500 border-primary-500;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Comment bubble styling */
+.comment-bubble {
+  position: relative;
+  background: rgba(55, 65, 81, 0.8);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+.comment-bubble::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid rgba(55, 65, 81, 0.8);
+}
