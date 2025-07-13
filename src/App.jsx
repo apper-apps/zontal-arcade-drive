@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ToastContainer } from "react-toastify";
+import AboutUs from "@/components/pages/AboutUs";
+import ContactUs from "@/components/pages/ContactUs";
+import PrivacyPolicy from "@/components/pages/PrivacyPolicy";
+import Disclaimer from "@/components/pages/Disclaimer";
 import FirebaseProvider from "@/components/organisms/FirebaseProvider";
 import Header from "@/components/organisms/Header";
-import HomePage from "@/components/pages/HomePage";
-import GameDetailPage from "@/components/pages/GameDetailPage";
-import AdminPanel from "@/components/pages/AdminPanel";
 import Loading from "@/components/ui/Loading";
+import AdminPanel from "@/components/pages/AdminPanel";
+import GameDetailPage from "@/components/pages/GameDetailPage";
+import HomePage from "@/components/pages/HomePage";
 import { useFirebase } from "@/hooks/useFirebase";
 
 const AppContent = () => {
@@ -58,6 +62,7 @@ const AppContent = () => {
   }
 
   // Render current page
+// Render current page
   const renderCurrentPage = () => {
     switch (currentPage) {
       case "gameDetail":
@@ -73,12 +78,36 @@ const AppContent = () => {
             onBack={() => handleNavigation("home")}
           />
         );
+      case "about":
+        return (
+          <AboutUs
+            onBack={() => handleNavigation("home")}
+          />
+        );
+      case "contact":
+        return (
+          <ContactUs
+            onBack={() => handleNavigation("home")}
+          />
+        );
+      case "privacy":
+        return (
+          <PrivacyPolicy
+            onBack={() => handleNavigation("home")}
+          />
+        );
+      case "disclaimer":
+        return (
+          <Disclaimer
+            onBack={() => handleNavigation("home")}
+          />
+        );
       default:
         return (
           <HomePage
             searchTerm={searchTerm}
             onGameSelect={handleGameSelect}
-          />
+/>
         );
     }
   };

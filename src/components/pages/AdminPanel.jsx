@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
+import * as contentService from "@/services/api/contentService";
 import ApperIcon from "@/components/ApperIcon";
 import Empty from "@/components/ui/Empty";
 import Error from "@/components/ui/Error";
@@ -19,7 +20,7 @@ const AdminPanel = ({ onBack }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editingGame, setEditingGame] = useState(null);
-  const [deleteGameId, setDeleteGameId] = useState(null);
+const [deleteGameId, setDeleteGameId] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -30,6 +31,15 @@ const AdminPanel = ({ onBack }) => {
   const [adsenseSettings, setAdsenseSettings] = useState({
     publisherId: "",
     adUnitIds: [""]
+  });
+  const [activeTab, setActiveTab] = useState("games");
+  const [contents, setContents] = useState([]);
+  const [editingContent, setEditingContent] = useState(null);
+  const [deleteContentId, setDeleteContentId] = useState(null);
+  const [contentFormData, setContentFormData] = useState({
+    type: "about",
+    title: "",
+    content: ""
   });
   const [submitting, setSubmitting] = useState(false);
   const { db, adsenseSettings: currentAdsenseSettings, setAdsenseSettings: updateAdsenseSettings } = useFirebase();
@@ -81,7 +91,8 @@ const AdminPanel = ({ onBack }) => {
 
   useEffect(() => {
     if (db && isAuthenticated) {
-      loadGames();
+loadGames();
+      loadContents();
     }
   }, [db, isAuthenticated]);
 
@@ -92,7 +103,17 @@ const AdminPanel = ({ onBack }) => {
         adUnitIds: currentAdsenseSettings.adUnitIds || [""]
       });
     }
-  }, [currentAdsenseSettings]);
+}, [currentAdsenseSettings]);
+
+  const loadContents = async () => {
+    try {
+      const contentsData = await contentService.getAll();
+      setContents(contentsData);
+    } catch (err) {
+      console.error("Error loading contents:", err);
+      toast.error("Failed to load contents");
+    }
+  };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -216,6 +237,76 @@ const AdminPanel = ({ onBack }) => {
       ...prev,
       adUnitIds: prev.adUnitIds.map((id, i) => i === index ? value : id)
 }));
+};
+
+  const handleContentSubmit = async (e) => {
+    e.preventDefault();
+    if (!contentFormData.title.trim() || !contentFormData.content.trim()) {
+      toast.error("Title and content are required");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      
+      const contentData = {
+        ...contentFormData,
+        title: contentFormData.title.trim(),
+        content: contentFormData.content.trim()
+      };
+
+      if (editingContent) {
+        await contentService.update(editingContent.Id, contentData);
+        setContents(prev => prev.map(c => c.Id === editingContent.Id ? { ...c, ...contentData } : c));
+        toast.success("Content updated successfully!");
+      } else {
+        const newContent = await contentService.create(contentData);
+        setContents(prev => [newContent, ...prev]);
+        toast.success("Content added successfully!");
+      }
+
+      resetContentForm();
+    } catch (err) {
+      console.error("Error saving content:", err);
+      toast.error("Failed to save content");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEditContent = (content) => {
+    setEditingContent(content);
+    setContentFormData({
+      type: content.type,
+      title: content.title,
+      content: content.content
+    });
+  };
+
+  const handleDeleteContent = async () => {
+    if (!deleteContentId) return;
+
+    try {
+      setSubmitting(true);
+      await contentService.delete(deleteContentId);
+      setContents(prev => prev.filter(c => c.Id !== deleteContentId));
+      setDeleteContentId(null);
+      toast.success("Content deleted successfully!");
+    } catch (err) {
+      console.error("Error deleting content:", err);
+      toast.error("Failed to delete content");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetContentForm = () => {
+    setContentFormData({
+      type: "about",
+      title: "",
+      content: ""
+    });
+    setEditingContent(null);
   };
 
   // Show login modal if not authenticated
@@ -341,9 +432,9 @@ const AdminPanel = ({ onBack }) => {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between mb-8"
       >
-        <div>
+<div>
           <h1 className="text-3xl font-bold gradient-text">Admin Panel</h1>
-          <p className="text-dark-muted">Manage games and AdSense settings</p>
+          <p className="text-dark-muted">Manage games, content pages and AdSense settings</p>
         </div>
 <div className="flex items-center space-x-4">
           <motion.button
@@ -365,9 +456,32 @@ const AdminPanel = ({ onBack }) => {
             <span>Logout</span>
           </motion.button>
         </div>
-      </motion.div>
+</motion.div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      {/* Tabs */}
+      <div className="flex space-x-2 mb-8">
+        {[
+          { id: "games", label: "Games", icon: "Gamepad2" },
+          { id: "content", label: "Content Pages", icon: "FileText" }
+        ].map((tab) => (
+          <motion.button
+            key={tab.id}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              activeTab === tab.id
+                ? "bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg"
+                : "bg-dark-surface text-dark-muted hover:text-dark-text hover:bg-dark-card"
+            }`}
+          >
+            <ApperIcon name={tab.icon} size={18} />
+            <span>{tab.label}</span>
+          </motion.button>
+        ))}
+      </div>
+{activeTab === "games" && (
+        <div className="grid lg:grid-cols-2 gap-8">
         {/* Game Form */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -626,8 +740,169 @@ const AdminPanel = ({ onBack }) => {
               </AnimatePresence>
             </div>
           )}
-        </motion.div>
-      </div>
+</motion.div>
+        </div>
+      )}
+
+      {activeTab === "content" && (
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Content Form */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="bg-dark-surface rounded-xl p-6 shadow-lg"
+          >
+            <h2 className="text-xl font-semibold text-dark-text mb-6">
+              {editingContent ? "Edit Content" : "Add New Content"}
+            </h2>
+
+            <form onSubmit={handleContentSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  Content Type *
+                </label>
+                <select
+                  value={contentFormData.type}
+                  onChange={(e) => setContentFormData(prev => ({ ...prev, type: e.target.value }))}
+                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                  required
+                >
+                  <option value="about">About Us</option>
+                  <option value="contact">Contact Us</option>
+                  <option value="privacy">Privacy Policy</option>
+                  <option value="disclaimer">Disclaimer</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  value={contentFormData.title}
+                  onChange={(e) => setContentFormData(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                  placeholder="Enter content title"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  Content *
+                </label>
+                <textarea
+                  value={contentFormData.content}
+                  onChange={(e) => setContentFormData(prev => ({ ...prev, content: e.target.value }))}
+                  rows={12}
+                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 resize-none"
+                  placeholder="Enter content (supports line breaks)"
+                  required
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <motion.button
+                  type="submit"
+                  disabled={submitting}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all duration-200 btn-glow"
+                >
+                  {submitting ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>{editingContent ? "Updating..." : "Adding..."}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <ApperIcon name={editingContent ? "Save" : "Plus"} size={16} className="inline mr-2" />
+                      {editingContent ? "Update Content" : "Add Content"}
+                    </>
+                  )}
+                </motion.button>
+
+                {editingContent && (
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={resetContentForm}
+                    className="px-6 py-3 border border-dark-card text-dark-muted hover:text-dark-text hover:bg-dark-card rounded-lg transition-all duration-200"
+                  >
+                    Cancel
+                  </motion.button>
+                )}
+              </div>
+            </form>
+          </motion.div>
+
+          {/* Content List */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="bg-dark-surface rounded-xl p-6 shadow-lg"
+          >
+            <h2 className="text-xl font-semibold text-dark-text mb-6">
+              Content Pages ({contents.length})
+            </h2>
+
+            {contents.length === 0 ? (
+              <Empty 
+                type="admin"
+                action={() => document.querySelector('select[value]').focus()}
+                actionLabel="Add First Content"
+              />
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                <AnimatePresence>
+                  {contents.map((content, index) => (
+                    <motion.div
+                      key={content.Id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-card hover:border-primary-500/50 transition-all duration-200"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-dark-text truncate">
+                          {content.title}
+                        </h3>
+                        <p className="text-sm text-dark-muted capitalize">
+                          {content.type.replace(/([A-Z])/g, ' $1').trim()}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-2 ml-4">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleEditContent(content)}
+                          className="p-2 text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors"
+                          title="Edit content"
+                        >
+                          <ApperIcon name="Edit2" size={16} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setDeleteContentId(content.Id)}
+                          className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                          title="Delete content"
+                        >
+                          <ApperIcon name="Trash2" size={16} />
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </motion.div>
+        </div>
+)}
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -642,6 +917,22 @@ const AdminPanel = ({ onBack }) => {
       >
         <p className="text-dark-muted">
           Are you sure you want to delete this game? This action will also remove all associated comments and ratings and cannot be undone.
+        </p>
+</Modal>
+
+      {/* Delete Content Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteContentId}
+        onClose={() => setDeleteContentId(null)}
+        title="Delete Content"
+        type="danger"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteContent}
+        onCancel={() => setDeleteContentId(null)}
+      >
+        <p className="text-dark-muted">
+          Are you sure you want to delete this content? This action cannot be undone.
         </p>
       </Modal>
     </div>

@@ -12,8 +12,12 @@ const Header = ({
 }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  const navItems = [
+const navItems = [
     { id: "home", label: "Home", icon: "Home" },
+    { id: "about", label: "About", icon: "Info" },
+    { id: "contact", label: "Contact", icon: "Mail" },
+    { id: "privacy", label: "Privacy", icon: "Shield" },
+    { id: "disclaimer", label: "Disclaimer", icon: "AlertTriangle" },
     { id: "admin", label: "Admin", icon: "Settings" }
   ];
 
@@ -101,8 +105,8 @@ const Header = ({
                     : "text-dark-muted hover:text-dark-text hover:bg-dark-card"
                 )}
               >
-                <ApperIcon name={item.icon} size={18} />
-                <span className="hidden md:block">{item.label}</span>
+<ApperIcon name={item.icon} size={18} />
+                <span className="hidden lg:block">{item.label}</span>
               </motion.button>
             ))}
           </div>
