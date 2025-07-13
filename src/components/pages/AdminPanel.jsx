@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import * as contentService from "@/services/api/contentService";
 import ApperIcon from "@/components/ApperIcon";
 import Empty from "@/components/ui/Empty";
 import Error from "@/components/ui/Error";
 import Loading from "@/components/ui/Loading";
+import Disclaimer from "@/components/pages/Disclaimer";
 import AdSense from "@/components/molecules/AdSense";
 import Modal from "@/components/molecules/Modal";
 import { useFirebase } from "@/hooks/useFirebase";
+import * as contentService from "@/services/api/contentService";
 import * as ratingService from "@/services/api/ratingService";
 import * as gameService from "@/services/api/gameService";
 import * as commentService from "@/services/api/commentService";
@@ -32,7 +33,7 @@ const [deleteGameId, setDeleteGameId] = useState(null);
     publisherId: "",
     adUnitIds: [""]
   });
-  const [activeTab, setActiveTab] = useState("games");
+const [activeTab, setActiveTab] = useState("games");
   const [contents, setContents] = useState([]);
   const [editingContent, setEditingContent] = useState(null);
   const [deleteContentId, setDeleteContentId] = useState(null);
@@ -40,6 +41,9 @@ const [deleteGameId, setDeleteGameId] = useState(null);
     type: "about",
     title: "",
     content: ""
+  });
+  const [websiteName, setWebsiteName] = useState(() => {
+    return localStorage.getItem('websiteName') || 'Arcade Flow';
   });
   const [submitting, setSubmitting] = useState(false);
   const { db, adsenseSettings: currentAdsenseSettings, setAdsenseSettings: updateAdsenseSettings } = useFirebase();
@@ -307,6 +311,33 @@ loadGames();
       content: ""
     });
     setEditingContent(null);
+};
+
+  const handleWebsiteNameSubmit = async (e) => {
+    e.preventDefault();
+    if (!websiteName.trim()) {
+      toast.error("Website name is required");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const trimmedName = websiteName.trim();
+      setWebsiteName(trimmedName);
+      localStorage.setItem('websiteName', trimmedName);
+      
+      // Update parent component if updateWebsiteName prop is available
+      if (window.updateWebsiteName) {
+        window.updateWebsiteName(trimmedName);
+      }
+      
+      toast.success("Website name updated successfully!");
+    } catch (err) {
+      console.error("Error saving website name:", err);
+      toast.error("Failed to save website name");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Show login modal if not authenticated
@@ -460,9 +491,10 @@ loadGames();
 
       {/* Tabs */}
       <div className="flex space-x-2 mb-8">
-        {[
+{[
           { id: "games", label: "Games", icon: "Gamepad2" },
-          { id: "content", label: "Content Pages", icon: "FileText" }
+          { id: "content", label: "Content Pages", icon: "FileText" },
+          { id: "website", label: "Website Settings", icon: "Globe" }
         ].map((tab) => (
           <motion.button
             key={tab.id}
@@ -899,10 +931,81 @@ loadGames();
                   ))}
                 </AnimatePresence>
               </div>
-            )}
+)}
           </motion.div>
         </div>
-)}
+      )}
+
+      {activeTab === "website" && (
+        <div className="grid lg:grid-cols-1 gap-8 max-w-2xl mx-auto">
+          {/* Website Settings Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-dark-surface rounded-xl p-6 shadow-lg"
+          >
+            <h2 className="text-xl font-semibold text-dark-text mb-6">
+              Website Configuration
+            </h2>
+
+            <form onSubmit={handleWebsiteNameSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  Website Name *
+                </label>
+                <input
+                  type="text"
+                  value={websiteName}
+                  onChange={(e) => setWebsiteName(e.target.value)}
+                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                  placeholder="Enter website name"
+                  required
+                />
+                <p className="text-xs text-dark-muted mt-2">
+                  This name will appear in the logo, loading screen, and footer throughout the website.
+                </p>
+              </div>
+
+              <div className="p-4 bg-dark-bg rounded-lg border border-dark-card">
+                <h3 className="text-sm font-medium text-dark-text mb-2">Preview</h3>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
+                    <ApperIcon name="Gamepad2" size={16} className="text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold gradient-text text-lg">
+                      {websiteName || 'Website Name'}
+                    </h4>
+                    <p className="text-xs text-dark-muted -mt-1">
+                      HTML5 Game Portal
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <motion.button
+                type="submit"
+                disabled={submitting}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all duration-200 btn-glow"
+              >
+                {submitting ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </div>
+                ) : (
+                  <>
+                    <ApperIcon name="Save" size={16} className="inline mr-2" />
+                    Save Website Name
+                  </>
+                )}
+              </motion.button>
+            </form>
+          </motion.div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <Modal

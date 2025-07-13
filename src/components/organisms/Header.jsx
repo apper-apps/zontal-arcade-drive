@@ -8,7 +8,9 @@ const Header = ({
   setCurrentPage, 
   searchTerm, 
   setSearchTerm, 
-  userId 
+  userId,
+  websiteName,
+  updateWebsiteName
 }) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
@@ -41,7 +43,7 @@ const navItems = [
             </div>
 <div className="hidden sm:block">
               <h1 className="text-2xl font-bold gradient-text">
-                Arcade Flow
+                {websiteName}
               </h1>
               <p className="text-xs text-dark-muted -mt-1">
                 HTML5 Game Portal

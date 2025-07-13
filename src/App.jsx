@@ -17,8 +17,16 @@ const AppContent = () => {
   const [currentPage, setCurrentPage] = useState("home");
   const [selectedGame, setSelectedGame] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [websiteName, setWebsiteName] = useState(() => {
+    return localStorage.getItem('websiteName') || 'Arcade Flow';
+  });
   const { loadingAuth, userId } = useFirebase();
 
+  // Update website name and persist to localStorage
+  const updateWebsiteName = (newName) => {
+    setWebsiteName(newName);
+    localStorage.setItem('websiteName', newName);
+  };
   // Handle game selection
   const handleGameSelect = (game) => {
     setSelectedGame(game);
@@ -51,7 +59,7 @@ const AppContent = () => {
             </motion.div>
           </div>
 <h2 className="text-2xl font-bold gradient-text mb-2">
-            Arcade Flow
+            {websiteName}
           </h2>
           <p className="text-dark-muted">
             Initializing game portal...
@@ -115,12 +123,14 @@ const AppContent = () => {
   return (
     <div className="min-h-screen bg-dark-bg">
       {/* Header */}
-      <Header
+<Header
         currentPage={currentPage}
         setCurrentPage={handleNavigation}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         userId={userId}
+        websiteName={websiteName}
+        updateWebsiteName={updateWebsiteName}
       />
 
       {/* Main Content */}
@@ -143,13 +153,13 @@ const AppContent = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
 <h3 className="text-lg font-semibold gradient-text mb-2">
-              Arcade Flow
+              {websiteName}
             </h3>
             <p className="text-dark-muted mb-4">
               Your premier destination for HTML5 games
             </p>
             <div className="flex justify-center space-x-6 text-sm text-dark-muted">
-              <span>© 2024 Arcade Flow</span>
+              <span>© 2024 {websiteName}</span>
               <span>•</span>
               <span>{userId ? `User: ${userId.slice(-8).toUpperCase()}` : "Anonymous"}</span>
             </div>
