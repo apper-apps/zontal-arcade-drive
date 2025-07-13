@@ -35,9 +35,9 @@ const Header = ({
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
               <ApperIcon name="Gamepad2" size={24} className="text-white" />
             </div>
-            <div className="hidden sm:block">
+<div className="hidden sm:block">
               <h1 className="text-2xl font-bold gradient-text">
-                Zontal Arcade
+                Arcade Flow
               </h1>
               <p className="text-xs text-dark-muted -mt-1">
                 HTML5 Game Portal

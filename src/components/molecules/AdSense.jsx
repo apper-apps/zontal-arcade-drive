@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import ApperIcon from "@/components/ApperIcon";
 
+// AdSense Component with ads.txt support
+// For Google AdSense verification, ensure ads.txt file is properly configured
+// File location: public/ads.txt (accessible at https://yourdomain.com/ads.txt)
 const AdSense = ({ 
   publisherId, 
   adSlot, 

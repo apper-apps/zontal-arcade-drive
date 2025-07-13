@@ -46,8 +46,8 @@ const AppContent = () => {
               <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full" />
             </motion.div>
           </div>
-          <h2 className="text-2xl font-bold gradient-text mb-2">
-            Zontal Arcade
+<h2 className="text-2xl font-bold gradient-text mb-2">
+            Arcade Flow
           </h2>
           <p className="text-dark-muted">
             Initializing game portal...
@@ -113,14 +113,14 @@ const AppContent = () => {
       <footer className="bg-dark-surface border-t border-dark-card mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <h3 className="text-lg font-semibold gradient-text mb-2">
-              Zontal Arcade
+<h3 className="text-lg font-semibold gradient-text mb-2">
+              Arcade Flow
             </h3>
             <p className="text-dark-muted mb-4">
               Your premier destination for HTML5 games
             </p>
             <div className="flex justify-center space-x-6 text-sm text-dark-muted">
-              <span>© 2024 Zontal Arcade</span>
+              <span>© 2024 Arcade Flow</span>
               <span>•</span>
               <span>{userId ? `User: ${userId.slice(-8).toUpperCase()}` : "Anonymous"}</span>
             </div>

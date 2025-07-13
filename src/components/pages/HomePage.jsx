@@ -101,8 +101,8 @@ const HomePage = ({ searchTerm, onGameSelect }) => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-12"
       >
-        <h1 className="text-4xl md:text-6xl font-bold gradient-text mb-4">
-          Welcome to Zontal Arcade
+<h1 className="text-4xl md:text-6xl font-bold gradient-text mb-4">
+          Welcome to Arcade Flow
         </h1>
         <p className="text-xl text-dark-muted mb-8 max-w-2xl mx-auto">
           Discover amazing HTML5 games, rate your favorites, and join our gaming community!

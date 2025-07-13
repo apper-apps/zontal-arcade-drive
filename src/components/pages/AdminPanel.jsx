@@ -1,17 +1,20 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import Empty from "@/components/ui/Empty";
-import Modal from "@/components/molecules/Modal";
 import ApperIcon from "@/components/ApperIcon";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import AdSense from "@/components/molecules/AdSense";
+import Modal from "@/components/molecules/Modal";
+import { useFirebase } from "@/hooks/useFirebase";
+import * as ratingService from "@/services/api/ratingService";
 import * as gameService from "@/services/api/gameService";
 import * as commentService from "@/services/api/commentService";
-import * as ratingService from "@/services/api/ratingService";
-import { useFirebase } from "@/hooks/useFirebase";
-
 const AdminPanel = ({ onBack }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLogin, setShowLogin] = useState(true);
+  const [loginData, setLoginData] = useState({ username: "", password: "" });
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,6 +33,36 @@ const AdminPanel = ({ onBack }) => {
   });
   const [submitting, setSubmitting] = useState(false);
   const { db, adsenseSettings: currentAdsenseSettings, setAdsenseSettings: updateAdsenseSettings } = useFirebase();
+// Check for existing auth session
+  useEffect(() => {
+    const authSession = sessionStorage.getItem('adminAuth');
+    if (authSession === 'authenticated') {
+      setIsAuthenticated(true);
+      setShowLogin(false);
+    }
+  }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    
+    // Hardcoded credentials validation
+    if (loginData.username === "Admin" && loginData.password === "Admin123") {
+      setIsAuthenticated(true);
+      setShowLogin(false);
+      sessionStorage.setItem('adminAuth', 'authenticated');
+      toast.success("Successfully logged in to admin panel");
+    } else {
+      toast.error("Invalid credentials. Please try again.");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setShowLogin(true);
+    sessionStorage.removeItem('adminAuth');
+    setLoginData({ username: "", password: "" });
+    toast.info("Logged out from admin panel");
+  };
 
   const loadGames = async () => {
     try {
@@ -47,10 +80,10 @@ const AdminPanel = ({ onBack }) => {
   };
 
   useEffect(() => {
-    if (db) {
+    if (db && isAuthenticated) {
       loadGames();
     }
-  }, [db]);
+  }, [db, isAuthenticated]);
 
   useEffect(() => {
     if (currentAdsenseSettings) {
@@ -182,8 +215,100 @@ const AdminPanel = ({ onBack }) => {
     setAdsenseSettings(prev => ({
       ...prev,
       adUnitIds: prev.adUnitIds.map((id, i) => i === index ? value : id)
-    }));
+}));
   };
+
+  // Show login modal if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between mb-8"
+          >
+            <div>
+              <h1 className="text-3xl font-bold gradient-text">Admin Panel</h1>
+              <p className="text-dark-muted">Authentication required</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onBack}
+              className="flex items-center space-x-2 text-dark-muted hover:text-dark-text transition-colors"
+            >
+              <ApperIcon name="ArrowLeft" size={20} />
+              <span>Back to Home</span>
+            </motion.button>
+          </motion.div>
+          
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-dark-surface rounded-xl p-8 shadow-2xl max-w-md w-full"
+            >
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <ApperIcon name="Lock" size={32} className="text-white" />
+                </div>
+                <h2 className="text-2xl font-bold gradient-text mb-2">Admin Login</h2>
+                <p className="text-dark-muted">Enter your credentials to access the admin panel</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-text mb-2">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={loginData.username}
+                    onChange={(e) => setLoginData(prev => ({ ...prev, username: e.target.value }))}
+                    className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                    placeholder="Enter username"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-text mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                    className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                    placeholder="Enter password"
+                    required
+                  />
+                </div>
+
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-200 btn-glow"
+                >
+                  <ApperIcon name="LogIn" size={16} className="inline mr-2" />
+                  Login to Admin Panel
+                </motion.button>
+              </form>
+
+              <div className="mt-6 p-4 bg-dark-bg rounded-lg border border-dark-card">
+                <p className="text-xs text-dark-muted text-center">
+                  <ApperIcon name="Info" size={12} className="inline mr-1" />
+                  Demo credentials: Admin / Admin123
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (loading) {
     return (
@@ -208,7 +333,6 @@ const AdminPanel = ({ onBack }) => {
       </div>
     );
   }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -221,15 +345,26 @@ const AdminPanel = ({ onBack }) => {
           <h1 className="text-3xl font-bold gradient-text">Admin Panel</h1>
           <p className="text-dark-muted">Manage games and AdSense settings</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onBack}
-          className="flex items-center space-x-2 text-dark-muted hover:text-dark-text transition-colors"
-        >
-          <ApperIcon name="ArrowLeft" size={20} />
-          <span>Back to Home</span>
-        </motion.button>
+<div className="flex items-center space-x-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onBack}
+            className="flex items-center space-x-2 text-dark-muted hover:text-dark-text transition-colors"
+          >
+            <ApperIcon name="ArrowLeft" size={20} />
+            <span>Back to Home</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleLogout}
+            className="flex items-center space-x-2 text-red-400 hover:text-red-300 transition-colors"
+          >
+            <ApperIcon name="LogOut" size={20} />
+            <span>Logout</span>
+          </motion.button>
+        </div>
       </motion.div>
 
       <div className="grid lg:grid-cols-2 gap-8">
