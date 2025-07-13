@@ -1,3 +1,5 @@
+import React from "react";
+import Error from "@/components/ui/Error";
 // Mock content data
 const mockContents = [
   {
@@ -79,10 +81,12 @@ export const update = async (id, contentData) => {
   mockContents[index] = {
     ...mockContents[index],
     ...contentData,
-    updatedAt: new Date().toISOString()
+updatedAt: new Date().toISOString()
   };
   
   return { ...mockContents[index] };
+};
+
 export const remove = async (id) => {
   await new Promise(resolve => setTimeout(resolve, 300));
   
@@ -93,5 +97,4 @@ export const remove = async (id) => {
   
   mockContents.splice(index, 1);
   return true;
-};
 };
