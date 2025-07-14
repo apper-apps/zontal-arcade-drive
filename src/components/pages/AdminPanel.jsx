@@ -994,24 +994,101 @@ const settings = {
               </motion.button>
             </form>
 
-            {/* Information Section */}
-            <div className="mt-8 p-4 bg-dark-bg rounded-lg border border-dark-card">
-              <h3 className="text-sm font-medium text-dark-text mb-3 flex items-center">
-                <ApperIcon name="Info" size={16} className="mr-2" />
-                AdSense Integration Guide
+{/* Site Verification Guide */}
+            <div className="mt-8 p-6 bg-dark-bg rounded-lg border border-dark-card">
+              <h3 className="text-lg font-semibold text-dark-text mb-4 flex items-center">
+                <ApperIcon name="Shield" size={20} className="mr-2 text-primary-500" />
+                Site Verification Guide
               </h3>
-              <div className="space-y-2 text-xs text-dark-muted">
-                <div>
-                  <strong>Meta Tag:</strong> Add this to your website's HTML head section for site verification
+              
+              <div className="space-y-6">
+                {/* Meta Tag Section */}
+                <div className="border-l-4 border-primary-500 pl-4">
+                  <h4 className="font-medium text-dark-text mb-2">📋 Meta Tag Implementation</h4>
+                  <div className="space-y-2 text-sm text-dark-muted">
+                    <p><strong>Location:</strong> Add to your website's HTML head section (index.html)</p>
+                    <p><strong>Current file:</strong> <code className="text-primary-400 bg-dark-surface px-2 py-1 rounded">index.html</code> (lines 14-15)</p>
+                    <div className="bg-dark-surface p-3 rounded-lg mt-2">
+                      <code className="text-xs text-primary-400 block">
+                        &lt;meta name="google-adsense-account" content="ca-pub-{adsenseSettings.publisherId || 'XXXXXXXXXXXXXXXX'}"&gt;
+                      </code>
+                      <code className="text-xs text-primary-400 block">
+                        &lt;meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE"&gt;
+                      </code>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <strong>Ads.txt:</strong> Upload this content to your website's ads.txt file for publisher verification
+
+                {/* Ads.txt Section */}
+                <div className="border-l-4 border-secondary-500 pl-4">
+                  <h4 className="font-medium text-dark-text mb-2">📄 Ads.txt File Setup</h4>
+                  <div className="space-y-2 text-sm text-dark-muted">
+                    <p><strong>Location:</strong> Website root directory as <code className="text-secondary-400 bg-dark-surface px-2 py-1 rounded">ads.txt</code></p>
+                    <p><strong>Current file:</strong> <code className="text-secondary-400 bg-dark-surface px-2 py-1 rounded">public/ads.txt</code></p>
+                    <p><strong>URL access:</strong> <code className="text-secondary-400 bg-dark-surface px-2 py-1 rounded">https://yoursite.com/ads.txt</code></p>
+                    <div className="bg-dark-surface p-3 rounded-lg mt-2">
+                      <code className="text-xs text-secondary-400 block">
+                        google.com, pub-{adsenseSettings.publisherId || 'XXXXXXXXXXXXXXXX'}, DIRECT, f08c47fec0942fa0
+                      </code>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <strong>Publisher ID:</strong> Your unique AdSense account identifier
+
+                {/* Step-by-step Instructions */}
+                <div className="border-l-4 border-accent-500 pl-4">
+                  <h4 className="font-medium text-dark-text mb-2">🔧 Implementation Steps</h4>
+                  <div className="space-y-3 text-sm text-dark-muted">
+                    <div className="flex items-start space-x-3">
+                      <span className="bg-accent-500 text-white text-xs px-2 py-1 rounded-full font-bold">1</span>
+                      <div>
+                        <p><strong>Get your Publisher ID:</strong> Visit AdSense → Account → Account Information</p>
+                        <p className="text-xs">Format: ca-pub-1234567890123456</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <span className="bg-accent-500 text-white text-xs px-2 py-1 rounded-full font-bold">2</span>
+                      <div>
+                        <p><strong>Update Meta Tag:</strong> Replace "ca-pub-XXXXXXXXXXXXXXXX" in index.html</p>
+                        <p className="text-xs">Or use the Meta Tag field above to generate the correct format</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <span className="bg-accent-500 text-white text-xs px-2 py-1 rounded-full font-bold">3</span>
+                      <div>
+                        <p><strong>Update Ads.txt:</strong> Replace content in public/ads.txt with your Publisher ID</p>
+                        <p className="text-xs">Or use the Ads.txt Content field above to generate the correct format</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <span className="bg-accent-500 text-white text-xs px-2 py-1 rounded-full font-bold">4</span>
+                      <div>
+                        <p><strong>Verify Access:</strong> Check that https://yoursite.com/ads.txt shows your content</p>
+                        <p className="text-xs">This file must be accessible from your website's root directory</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <strong>Ad Unit IDs:</strong> Specific ad placement identifiers from your AdSense dashboard
+
+                {/* Additional Information */}
+                <div className="bg-dark-surface p-4 rounded-lg">
+                  <h4 className="font-medium text-dark-text mb-2 flex items-center">
+                    <ApperIcon name="Info" size={16} className="mr-2" />
+                    Additional Notes
+                  </h4>
+                  <div className="space-y-2 text-xs text-dark-muted">
+                    <div>
+                      <strong>Publisher ID:</strong> Your unique AdSense account identifier (never changes)
+                    </div>
+                    <div>
+                      <strong>Ad Unit IDs:</strong> Specific ad placement identifiers from your AdSense dashboard
+                    </div>
+                    <div>
+                      <strong>Verification:</strong> Google may take 24-48 hours to verify your site after implementation
+                    </div>
+                    <div>
+                      <strong>Testing:</strong> Use Google AdSense's site verification tool to check implementation
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
