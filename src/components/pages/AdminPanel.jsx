@@ -29,11 +29,13 @@ const [deleteGameId, setDeleteGameId] = useState(null);
     imageUrl: "",
     gameUrl: ""
   });
-  const [adsenseSettings, setAdsenseSettings] = useState({
+const [adsenseSettings, setAdsenseSettings] = useState({
     publisherId: "",
-    adUnitIds: [""]
+    adUnitIds: [""],
+    metaTag: "",
+    adsTxtContent: ""
   });
-const [activeTab, setActiveTab] = useState("games");
+  const [activeTab, setActiveTab] = useState("games");
   const [contents, setContents] = useState([]);
   const [editingContent, setEditingContent] = useState(null);
   const [deleteContentId, setDeleteContentId] = useState(null);
@@ -101,13 +103,15 @@ loadGames();
   }, [db, isAuthenticated]);
 
   useEffect(() => {
-    if (currentAdsenseSettings) {
+if (currentAdsenseSettings) {
       setAdsenseSettings({
         publisherId: currentAdsenseSettings.publisherId || "",
-        adUnitIds: currentAdsenseSettings.adUnitIds || [""]
+        adUnitIds: currentAdsenseSettings.adUnitIds || [""],
+        metaTag: currentAdsenseSettings.metaTag || "",
+        adsTxtContent: currentAdsenseSettings.adsTxtContent || ""
       });
     }
-}, [currentAdsenseSettings]);
+  }, [currentAdsenseSettings]);
 
   const loadContents = async () => {
     try {
@@ -207,11 +211,12 @@ loadGames();
     try {
       setSubmitting(true);
       
-      const settings = {
+const settings = {
         publisherId: adsenseSettings.publisherId.trim(),
-        adUnitIds: adsenseSettings.adUnitIds.filter(id => id.trim()).map(id => id.trim())
+        adUnitIds: adsenseSettings.adUnitIds.filter(id => id.trim()).map(id => id.trim()),
+        metaTag: adsenseSettings.metaTag.trim(),
+        adsTxtContent: adsenseSettings.adsTxtContent.trim()
       };
-
       await updateAdsenseSettings(settings);
       toast.success("AdSense settings saved successfully!");
     } catch (err) {
@@ -494,6 +499,7 @@ loadGames();
 {[
           { id: "games", label: "Games", icon: "Gamepad2" },
           { id: "content", label: "Content Pages", icon: "FileText" },
+          { id: "adsense", label: "AdSense", icon: "DollarSign" },
           { id: "website", label: "Website Settings", icon: "Globe" }
         ].map((tab) => (
           <motion.button
@@ -627,88 +633,7 @@ loadGames();
             </div>
           </form>
 
-          {/* AdSense Settings */}
-          <div className="mt-8 pt-8 border-t border-dark-card">
-            <h3 className="text-lg font-semibold text-dark-text mb-4">
-              AdSense Configuration
-            </h3>
-
-            <form onSubmit={handleAdsenseSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">
-                  Publisher ID
-                </label>
-                <input
-                  type="text"
-                  value={adsenseSettings.publisherId}
-                  onChange={(e) => setAdsenseSettings(prev => ({ ...prev, publisherId: e.target.value }))}
-                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
-                  placeholder="ca-pub-XXXXXXXXXXXXXXXX"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">
-                  Ad Unit IDs
-                </label>
-                <div className="space-y-2">
-                  {adsenseSettings.adUnitIds.map((adUnitId, index) => (
-                    <div key={index} className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={adUnitId}
-                        onChange={(e) => updateAdUnitId(index, e.target.value)}
-                        className="flex-1 p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
-                        placeholder="XXXXXXXXXX"
-                      />
-                      {adsenseSettings.adUnitIds.length > 1 && (
-                        <motion.button
-                          type="button"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => removeAdUnitField(index)}
-                          className="px-3 py-3 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                        >
-                          <ApperIcon name="Trash2" size={16} />
-                        </motion.button>
-                      )}
-                    </div>
-                  ))}
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={addAdUnitField}
-                    className="w-full p-2 border border-dashed border-dark-card text-dark-muted hover:text-dark-text hover:border-primary-500 rounded-lg transition-all duration-200"
-                  >
-                    <ApperIcon name="Plus" size={16} className="inline mr-2" />
-                    Add Ad Unit
-                  </motion.button>
-                </div>
-              </div>
-
-              <motion.button
-                type="submit"
-                disabled={submitting}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-accent-500 hover:bg-accent-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {submitting ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Saving...</span>
-                  </div>
-                ) : (
-                  <>
-                    <ApperIcon name="Save" size={16} className="inline mr-2" />
-                    Save AdSense Settings
-                  </>
-                )}
-              </motion.button>
-            </form>
-          </div>
-        </motion.div>
+</motion.div>
 
         {/* Games List */}
         <motion.div
@@ -934,8 +859,165 @@ loadGames();
 )}
           </motion.div>
         </div>
-      )}
+)}
 
+      {activeTab === "adsense" && (
+        <div className="grid lg:grid-cols-1 gap-8 max-w-4xl mx-auto">
+          {/* AdSense Settings Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-dark-surface rounded-xl p-6 shadow-lg"
+          >
+            <h2 className="text-xl font-semibold text-dark-text mb-6">
+              AdSense Configuration
+            </h2>
+
+            <form onSubmit={handleAdsenseSubmit} className="space-y-6">
+              {/* Publisher ID Section */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  Publisher ID
+                </label>
+                <input
+                  type="text"
+                  value={adsenseSettings.publisherId}
+                  onChange={(e) => setAdsenseSettings(prev => ({ ...prev, publisherId: e.target.value }))}
+                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                  placeholder="ca-pub-XXXXXXXXXXXXXXXX"
+                />
+                <p className="text-xs text-dark-muted mt-2">
+                  Your Google AdSense Publisher ID (found in your AdSense account)
+                </p>
+              </div>
+
+              {/* Ad Unit IDs Section */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  Ad Unit IDs
+                </label>
+                <div className="space-y-2">
+                  {adsenseSettings.adUnitIds.map((adUnitId, index) => (
+                    <div key={index} className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={adUnitId}
+                        onChange={(e) => updateAdUnitId(index, e.target.value)}
+                        className="flex-1 p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                        placeholder="XXXXXXXXXX"
+                      />
+                      {adsenseSettings.adUnitIds.length > 1 && (
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => removeAdUnitField(index)}
+                          className="px-3 py-3 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        >
+                          <ApperIcon name="Trash2" size={16} />
+                        </motion.button>
+                      )}
+                    </div>
+                  ))}
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={addAdUnitField}
+                    className="w-full p-2 border border-dashed border-dark-card text-dark-muted hover:text-dark-text hover:border-primary-500 rounded-lg transition-all duration-200"
+                  >
+                    <ApperIcon name="Plus" size={16} className="inline mr-2" />
+                    Add Ad Unit
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Meta Tag Section */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  AdSense Meta Tag Content
+                </label>
+                <input
+                  type="text"
+                  value={adsenseSettings.metaTag}
+                  onChange={(e) => setAdsenseSettings(prev => ({ ...prev, metaTag: e.target.value }))}
+                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
+                  placeholder="ca-pub-7659325373714686"
+                />
+                <div className="mt-2 p-3 bg-dark-bg rounded-lg border border-dark-card">
+                  <p className="text-xs text-dark-muted mb-2">Preview:</p>
+                  <code className="text-xs text-primary-400 break-all">
+                    &lt;meta name="google-adsense-account" content="{adsenseSettings.metaTag || 'ca-pub-7659325373714686'}"&gt;
+                  </code>
+                </div>
+              </div>
+
+              {/* Ads.txt Content Section */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  Ads.txt Content
+                </label>
+                <textarea
+                  value={adsenseSettings.adsTxtContent}
+                  onChange={(e) => setAdsenseSettings(prev => ({ ...prev, adsTxtContent: e.target.value }))}
+                  rows={4}
+                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 resize-none font-mono text-sm"
+                  placeholder="google.com, pub-7659325373714686, DIRECT, f08c47fec0942fa0"
+                />
+                <div className="mt-2 p-3 bg-dark-bg rounded-lg border border-dark-card">
+                  <p className="text-xs text-dark-muted mb-2">Example format:</p>
+                  <code className="text-xs text-primary-400 break-all">
+                    google.com, pub-7659325373714686, DIRECT, f08c47fec0942fa0
+                  </code>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <motion.button
+                type="submit"
+                disabled={submitting}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all duration-200 btn-glow"
+              >
+                {submitting ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </div>
+                ) : (
+                  <>
+                    <ApperIcon name="Save" size={16} className="inline mr-2" />
+                    Save AdSense Settings
+                  </>
+                )}
+              </motion.button>
+            </form>
+
+            {/* Information Section */}
+            <div className="mt-8 p-4 bg-dark-bg rounded-lg border border-dark-card">
+              <h3 className="text-sm font-medium text-dark-text mb-3 flex items-center">
+                <ApperIcon name="Info" size={16} className="mr-2" />
+                AdSense Integration Guide
+              </h3>
+              <div className="space-y-2 text-xs text-dark-muted">
+                <div>
+                  <strong>Meta Tag:</strong> Add this to your website's HTML head section for site verification
+                </div>
+                <div>
+                  <strong>Ads.txt:</strong> Upload this content to your website's ads.txt file for publisher verification
+                </div>
+                <div>
+                  <strong>Publisher ID:</strong> Your unique AdSense account identifier
+                </div>
+                <div>
+                  <strong>Ad Unit IDs:</strong> Specific ad placement identifiers from your AdSense dashboard
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
       {activeTab === "website" && (
         <div className="grid lg:grid-cols-1 gap-8 max-w-2xl mx-auto">
           {/* Website Settings Form */}
