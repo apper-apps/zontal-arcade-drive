@@ -1,14 +1,37 @@
 # Ads.txt file for Google AdSense verification
-# Replace with your actual AdSense Publisher ID when ready
+# This file provides alternative site ownership verification for AdSense
+# Accessible at: https://yourdomain.com/ads.txt
+
+# ==========================================
+# ALTERNATIVE VERIFICATION METHODS
+# ==========================================
+
+# METHOD 1: Publisher ID Verification (Most Common)
+# Get your Publisher ID from Google AdSense dashboard
 # Format: google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
-# 
-# This file will be accessible at: https://yourdomain.com/ads.txt
-# Required for Google AdSense verification and approval
-#
-# Instructions:
-# 1. Get your Publisher ID from Google AdSense
-# 2. Replace the example line below with your actual Publisher ID
-# 3. Uncomment the line by removing the # symbol
-#
-# Example (uncomment and replace with your Publisher ID):
+# Replace XXXXXXXXXXXXXXXX with your actual Publisher ID
+# Uncomment the line below:
 # google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0
+
+# METHOD 2: AdSense Account Verification
+# If you have multiple AdSense accounts, add each one:
+# google.com, pub-AAAAAAAAAAAAAAAA, DIRECT, f08c47fec0942fa0
+# google.com, pub-BBBBBBBBBBBBBBBB, DIRECT, f08c47fec0942fa0
+
+# METHOD 3: Reseller/Network Verification
+# For ad networks or resellers (if applicable):
+# adnetwork.com, pub-NETWORKID, RESELLER, certification_authority_id
+
+# ==========================================
+# VERIFICATION INSTRUCTIONS
+# ==========================================
+# 1. Go to Google AdSense > Account > Account Information
+# 2. Copy your Publisher ID (starts with "pub-")
+# 3. Replace the example Publisher ID above
+# 4. Remove the # symbol to uncomment the line
+# 5. Upload this file to your website's root directory
+# 6. Verify accessibility at: https://yourdomain.com/ads.txt
+# 7. Wait 24-48 hours for Google to crawl and verify
+
+# Note: This file must be accessible via HTTP/HTTPS
+# Do not use redirects - direct access only
