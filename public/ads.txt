@@ -8,4 +8,5 @@
 # IMPORTANT: This file must be accessible at https://yoursite.com/ads.txt
 # Make sure to update the Publisher ID before going live
 
-google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+# This content will be dynamically updated via AdminPanel

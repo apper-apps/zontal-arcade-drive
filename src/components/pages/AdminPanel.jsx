@@ -99,21 +99,35 @@ useEffect(() => {
     }
   }, [db, isAuthenticated]);
 
-  useEffect(() => {
-    if (currentAdsenseSettings) {
-      // Reconstruct the text content from existing settings
-      let textContent = "";
-      if (currentAdsenseSettings.metaTag) {
-        textContent += `<meta name="google-adsense-account" content="${currentAdsenseSettings.metaTag}">\n`;
+useEffect(() => {
+    const loadCurrentAdsenseSettings = async () => {
+      try {
+        const { getCurrent } = await import('@/services/api/adsenseService');
+        const currentSettings = await getCurrent();
+        
+        if (currentSettings) {
+          // Reconstruct the text content from existing settings
+          let textContent = "";
+          if (currentSettings.metaTag) {
+            textContent += `<meta name="google-adsense-account" content="${currentSettings.metaTag}">\n`;
+          }
+          if (currentSettings.verificationCode) {
+            textContent += `<meta name="google-site-verification" content="${currentSettings.verificationCode}">\n`;
+          }
+          if (currentSettings.adsTxtContent) {
+            textContent += `\n${currentSettings.adsTxtContent}`;
+          }
+          setAdsenseSettings({
+            textContent: textContent.trim()
+          });
+        }
+      } catch (error) {
+        console.error('Error loading AdSense settings:', error);
       }
-      if (currentAdsenseSettings.adsTxtContent) {
-        textContent += `\n${currentAdsenseSettings.adsTxtContent}`;
-      }
-      setAdsenseSettings({
-        textContent: textContent.trim()
-      });
-    }
-  }, [currentAdsenseSettings]);
+    };
+
+    loadCurrentAdsenseSettings();
+  }, []);
 
   const loadContents = async () => {
     try {
