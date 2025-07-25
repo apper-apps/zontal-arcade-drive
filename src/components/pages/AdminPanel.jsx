@@ -22,18 +22,15 @@ const AdminPanel = ({ onBack }) => {
   const [error, setError] = useState("");
   const [editingGame, setEditingGame] = useState(null);
 const [deleteGameId, setDeleteGameId] = useState(null);
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
     imageUrl: "",
     gameUrl: ""
   });
-const [adsenseSettings, setAdsenseSettings] = useState({
-    publisherId: "",
-    adUnitIds: [""],
-    metaTag: "",
-    adsTxtContent: ""
+  const [adsenseSettings, setAdsenseSettings] = useState({
+    textContent: ""
   });
   const [activeTab, setActiveTab] = useState("games");
   const [contents, setContents] = useState([]);
@@ -95,20 +92,25 @@ const [adsenseSettings, setAdsenseSettings] = useState({
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     if (db && isAuthenticated) {
-loadGames();
+      loadGames();
       loadContents();
     }
   }, [db, isAuthenticated]);
 
   useEffect(() => {
-if (currentAdsenseSettings) {
+    if (currentAdsenseSettings) {
+      // Reconstruct the text content from existing settings
+      let textContent = "";
+      if (currentAdsenseSettings.metaTag) {
+        textContent += `<meta name="google-adsense-account" content="${currentAdsenseSettings.metaTag}">\n`;
+      }
+      if (currentAdsenseSettings.adsTxtContent) {
+        textContent += `\n${currentAdsenseSettings.adsTxtContent}`;
+      }
       setAdsenseSettings({
-        publisherId: currentAdsenseSettings.publisherId || "",
-        adUnitIds: currentAdsenseSettings.adUnitIds || [""],
-        metaTag: currentAdsenseSettings.metaTag || "",
-        adsTxtContent: currentAdsenseSettings.adsTxtContent || ""
+        textContent: textContent.trim()
       });
     }
   }, [currentAdsenseSettings]);
@@ -205,20 +207,56 @@ if (currentAdsenseSettings) {
     setEditingGame(null);
   };
 
-  const handleAdsenseSubmit = async (e) => {
+const handleAdsenseSubmit = async (e) => {
     e.preventDefault();
     
     try {
       setSubmitting(true);
       
-const settings = {
-        publisherId: adsenseSettings.publisherId.trim(),
-        adUnitIds: adsenseSettings.adUnitIds.filter(id => id.trim()).map(id => id.trim()),
-        metaTag: adsenseSettings.metaTag.trim(),
-        adsTxtContent: adsenseSettings.adsTxtContent.trim()
+      const content = adsenseSettings.textContent.trim();
+      
+      // Parse content to extract different components
+      let publisherId = "";
+      let metaTag = "";
+      let adsTxtContent = "";
+      let adUnitIds = [];
+      
+      // Extract publisher ID from meta tag or ads.txt
+      const metaTagMatch = content.match(/<meta[^>]*name=["']google-adsense-account["'][^>]*content=["'](ca-pub-[^"']+)["'][^>]*>/i);
+      const adsTxtMatch = content.match(/google\.com,\s*(ca-pub-[^,\s]+)/i);
+      
+      if (metaTagMatch) {
+        publisherId = metaTagMatch[1];
+        metaTag = metaTagMatch[1];
+      } else if (adsTxtMatch) {
+        publisherId = adsTxtMatch[1];
+        metaTag = adsTxtMatch[1];
+      }
+      
+      // Extract ads.txt content (lines starting with google.com)
+      const adsTxtLines = content.split('\n').filter(line => 
+        line.trim().toLowerCase().startsWith('google.com')
+      );
+      if (adsTxtLines.length > 0) {
+        adsTxtContent = adsTxtLines.join('\n');
+      }
+      
+      // Extract ad unit IDs if present
+      const adUnitMatches = content.match(/ca-app-pub-\d+\/\d+/g);
+      if (adUnitMatches) {
+        adUnitIds = [...new Set(adUnitMatches)]; // Remove duplicates
+      }
+      
+      const settings = {
+        publisherId: publisherId,
+        adUnitIds: adUnitIds,
+        metaTag: metaTag,
+        adsTxtContent: adsTxtContent,
+        textContent: content
       };
+      
       await updateAdsenseSettings(settings);
-      toast.success("AdSense settings saved successfully!");
+      toast.success("AdSense settings saved successfully! Meta tags and ads.txt content have been configured.");
     } catch (err) {
       console.error("Error saving AdSense settings:", err);
       toast.error("Failed to save AdSense settings");
@@ -861,7 +899,7 @@ const settings = {
         </div>
 )}
 
-      {activeTab === "adsense" && (
+{activeTab === "adsense" && (
         <div className="grid lg:grid-cols-1 gap-8 max-w-4xl mx-auto">
           {/* AdSense Settings Form */}
           <motion.div
@@ -869,226 +907,224 @@ const settings = {
             animate={{ opacity: 1, y: 0 }}
             className="bg-dark-surface rounded-xl p-6 shadow-lg"
           >
-            <h2 className="text-xl font-semibold text-dark-text mb-6">
-              AdSense Configuration
+            <h2 className="text-xl font-semibold text-dark-text mb-6 flex items-center">
+              <ApperIcon name="DollarSign" size={24} className="mr-3 text-primary-500" />
+              AdSense Configuration & Website Verification
             </h2>
 
             <form onSubmit={handleAdsenseSubmit} className="space-y-6">
-              {/* Publisher ID Section */}
+              {/* Single Text Box for All AdSense Content */}
               <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">
-                  Publisher ID
+                <label className="block text-sm font-medium text-dark-text mb-3">
+                  <ApperIcon name="FileText" size={16} className="inline mr-2" />
+                  Paste Your AdSense Content Here
                 </label>
-                <input
-                  type="text"
-                  value={adsenseSettings.publisherId}
-                  onChange={(e) => setAdsenseSettings(prev => ({ ...prev, publisherId: e.target.value }))}
-                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
-                  placeholder="ca-pub-XXXXXXXXXXXXXXXX"
-                />
-                <p className="text-xs text-dark-muted mt-2">
-                  Your Google AdSense Publisher ID (found in your AdSense account)
-                </p>
-              </div>
-
-              {/* Ad Unit IDs Section */}
-              <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">
-                  Ad Unit IDs
-                </label>
-                <div className="space-y-2">
-                  {adsenseSettings.adUnitIds.map((adUnitId, index) => (
-                    <div key={index} className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={adUnitId}
-                        onChange={(e) => updateAdUnitId(index, e.target.value)}
-                        className="flex-1 p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
-                        placeholder="XXXXXXXXXX"
-                      />
-                      {adsenseSettings.adUnitIds.length > 1 && (
-                        <motion.button
-                          type="button"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => removeAdUnitField(index)}
-                          className="px-3 py-3 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                        >
-                          <ApperIcon name="Trash2" size={16} />
-                        </motion.button>
-                      )}
-                    </div>
-                  ))}
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={addAdUnitField}
-                    className="w-full p-2 border border-dashed border-dark-card text-dark-muted hover:text-dark-text hover:border-primary-500 rounded-lg transition-all duration-200"
-                  >
-                    <ApperIcon name="Plus" size={16} className="inline mr-2" />
-                    Add Ad Unit
-                  </motion.button>
+                <div className="bg-dark-bg p-4 rounded-lg border border-dark-card mb-3">
+                  <p className="text-sm text-dark-muted mb-2">
+                    <strong>What to paste:</strong> Copy and paste any of the following from your AdSense dashboard:
+                  </p>
+                  <ul className="text-xs text-dark-muted space-y-1 ml-4">
+                    <li>• Meta verification tags (e.g., &lt;meta name="google-adsense-account" content="ca-pub-..."&gt;)</li>
+                    <li>• Site verification codes (e.g., &lt;meta name="google-site-verification" content="..."&gt;)</li>
+                    <li>• Ads.txt content (e.g., google.com, pub-123456789, DIRECT, f08c47fec0942fa0)</li>
+                    <li>• Ad unit codes or any AdSense-related content</li>
+                  </ul>
                 </div>
-              </div>
-
-              {/* Meta Tag Section */}
-              <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">
-                  AdSense Meta Tag Content
-                </label>
-                <input
-                  type="text"
-                  value={adsenseSettings.metaTag}
-                  onChange={(e) => setAdsenseSettings(prev => ({ ...prev, metaTag: e.target.value }))}
-                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
-                  placeholder="ca-pub-7659325373714686"
-                />
-                <div className="mt-2 p-3 bg-dark-bg rounded-lg border border-dark-card">
-                  <p className="text-xs text-dark-muted mb-2">Preview:</p>
-                  <code className="text-xs text-primary-400 break-all">
-                    &lt;meta name="google-adsense-account" content="{adsenseSettings.metaTag || 'ca-pub-7659325373714686'}"&gt;
-                  </code>
-                </div>
-              </div>
-
-              {/* Ads.txt Content Section */}
-              <div>
-                <label className="block text-sm font-medium text-dark-text mb-2">
-                  Ads.txt Content
-                </label>
                 <textarea
-                  value={adsenseSettings.adsTxtContent}
-                  onChange={(e) => setAdsenseSettings(prev => ({ ...prev, adsTxtContent: e.target.value }))}
-                  rows={4}
-                  className="w-full p-3 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 resize-none font-mono text-sm"
-                  placeholder="google.com, pub-7659325373714686, DIRECT, f08c47fec0942fa0"
+                  value={adsenseSettings.textContent}
+                  onChange={(e) => setAdsenseSettings({ textContent: e.target.value })}
+                  rows={8}
+                  className="w-full p-4 bg-dark-bg border border-dark-card rounded-lg text-dark-text placeholder-dark-muted focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 resize-none font-mono text-sm"
+                  placeholder={`Paste your AdSense content here. Examples:
+
+<meta name="google-adsense-account" content="ca-pub-1234567890123456">
+<meta name="google-site-verification" content="your-verification-code-here">
+
+google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0
+
+You can paste multiple items - the system will automatically organize them.`}
                 />
-                <div className="mt-2 p-3 bg-dark-bg rounded-lg border border-dark-card">
-                  <p className="text-xs text-dark-muted mb-2">Example format:</p>
-                  <code className="text-xs text-primary-400 break-all">
-                    google.com, pub-7659325373714686, DIRECT, f08c47fec0942fa0
-                  </code>
-                </div>
+                
+                {/* Live Preview */}
+                {adsenseSettings.textContent && (
+                  <div className="mt-4 space-y-4">
+                    <div className="bg-dark-bg p-4 rounded-lg border border-dark-card">
+                      <h4 className="text-sm font-medium text-dark-text mb-3 flex items-center">
+                        <ApperIcon name="Eye" size={16} className="mr-2 text-secondary-500" />
+                        Content Preview & Auto-Detection
+                      </h4>
+                      
+                      {/* Detected Meta Tags */}
+                      {(() => {
+                        const metaMatches = adsenseSettings.textContent.match(/<meta[^>]*>/gi);
+                        if (metaMatches) {
+                          return (
+                            <div className="mb-3">
+                              <p className="text-xs text-secondary-400 mb-2">📋 Detected Meta Tags (will be added to index.html):</p>
+                              <div className="bg-dark-surface p-3 rounded font-mono text-xs">
+                                {metaMatches.map((tag, i) => (
+                                  <div key={i} className="text-secondary-400 break-all">{tag}</div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                      })()}
+                      
+                      {/* Detected Ads.txt Content */}
+                      {(() => {
+                        const adsTxtLines = adsenseSettings.textContent.split('\n').filter(line => 
+                          line.trim().toLowerCase().startsWith('google.com')
+                        );
+                        if (adsTxtLines.length > 0) {
+                          return (
+                            <div className="mb-3">
+                              <p className="text-xs text-accent-400 mb-2">📄 Detected Ads.txt Content (will be added to public/ads.txt):</p>
+                              <div className="bg-dark-surface p-3 rounded font-mono text-xs">
+                                {adsTxtLines.map((line, i) => (
+                                  <div key={i} className="text-accent-400">{line}</div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                      })()}
+                      
+                      {/* Detected Publisher ID */}
+                      {(() => {
+                        const pubIdMatch = adsenseSettings.textContent.match(/(ca-pub-[0-9]+)/i);
+                        if (pubIdMatch) {
+                          return (
+                            <div className="mb-3">
+                              <p className="text-xs text-primary-400 mb-2">🆔 Detected Publisher ID:</p>
+                              <div className="bg-dark-surface p-2 rounded font-mono text-xs text-primary-400">
+                                {pubIdMatch[1]}
+                              </div>
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Submit Button */}
-              <motion.button
+<motion.button
                 type="submit"
-                disabled={submitting}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all duration-200 btn-glow"
+                disabled={submitting || !adsenseSettings.textContent.trim()}
+                whileHover={{ scale: submitting ? 1 : 1.02 }}
+                whileTap={{ scale: submitting ? 1 : 0.98 }}
+                className="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 px-6 rounded-lg font-medium hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {submitting ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Saving...</span>
-                  </div>
+                  <>
+                    <ApperIcon name="Loader2" size={20} className="mr-2 animate-spin" />
+                    Processing AdSense Content...
+                  </>
                 ) : (
                   <>
-                    <ApperIcon name="Save" size={16} className="inline mr-2" />
-                    Save AdSense Settings
+                    <ApperIcon name="Save" size={20} className="mr-2" />
+                    Save & Apply AdSense Configuration
                   </>
                 )}
               </motion.button>
             </form>
 
-{/* Site Verification Guide */}
+            {/* Quick Setup Guide */}
             <div className="mt-8 p-6 bg-dark-bg rounded-lg border border-dark-card">
               <h3 className="text-lg font-semibold text-dark-text mb-4 flex items-center">
-                <ApperIcon name="Shield" size={20} className="mr-2 text-primary-500" />
-                Site Verification Guide
+                <ApperIcon name="Zap" size={20} className="mr-2 text-accent-500" />
+                Quick AdSense Setup Guide
               </h3>
               
-              <div className="space-y-6">
-                {/* Meta Tag Section */}
-                <div className="border-l-4 border-primary-500 pl-4">
-                  <h4 className="font-medium text-dark-text mb-2">📋 Meta Tag Implementation</h4>
-                  <div className="space-y-2 text-sm text-dark-muted">
-                    <p><strong>Location:</strong> Add to your website's HTML head section (index.html)</p>
-                    <p><strong>Current file:</strong> <code className="text-primary-400 bg-dark-surface px-2 py-1 rounded">index.html</code> (lines 14-15)</p>
-                    <div className="bg-dark-surface p-3 rounded-lg mt-2">
-                      <code className="text-xs text-primary-400 block">
-                        &lt;meta name="google-adsense-account" content="ca-pub-{adsenseSettings.publisherId || 'XXXXXXXXXXXXXXXX'}"&gt;
-                      </code>
-                      <code className="text-xs text-primary-400 block">
-                        &lt;meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE"&gt;
-                      </code>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Ads.txt Section */}
-                <div className="border-l-4 border-secondary-500 pl-4">
-                  <h4 className="font-medium text-dark-text mb-2">📄 Ads.txt File Setup</h4>
-                  <div className="space-y-2 text-sm text-dark-muted">
-                    <p><strong>Location:</strong> Website root directory as <code className="text-secondary-400 bg-dark-surface px-2 py-1 rounded">ads.txt</code></p>
-                    <p><strong>Current file:</strong> <code className="text-secondary-400 bg-dark-surface px-2 py-1 rounded">public/ads.txt</code></p>
-                    <p><strong>URL access:</strong> <code className="text-secondary-400 bg-dark-surface px-2 py-1 rounded">https://yoursite.com/ads.txt</code></p>
-                    <div className="bg-dark-surface p-3 rounded-lg mt-2">
-                      <code className="text-xs text-secondary-400 block">
-                        google.com, pub-{adsenseSettings.publisherId || 'XXXXXXXXXXXXXXXX'}, DIRECT, f08c47fec0942fa0
-                      </code>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step-by-step Instructions */}
-                <div className="border-l-4 border-accent-500 pl-4">
-                  <h4 className="font-medium text-dark-text mb-2">🔧 Implementation Steps</h4>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* What to Get from AdSense */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-dark-text mb-3 flex items-center">
+                    <ApperIcon name="Search" size={16} className="mr-2 text-primary-500" />
+                    What to Find in Your AdSense Account
+                  </h4>
                   <div className="space-y-3 text-sm text-dark-muted">
                     <div className="flex items-start space-x-3">
-                      <span className="bg-accent-500 text-white text-xs px-2 py-1 rounded-full font-bold">1</span>
+                      <span className="bg-primary-500 text-white text-xs px-2 py-1 rounded-full font-bold">1</span>
                       <div>
-                        <p><strong>Get your Publisher ID:</strong> Visit AdSense → Account → Account Information</p>
-                        <p className="text-xs">Format: ca-pub-1234567890123456</p>
+                        <p><strong>Site Verification Code:</strong></p>
+                        <p className="text-xs">AdSense → Sites → Add site → HTML tag method</p>
+                        <code className="text-xs bg-dark-surface px-2 py-1 rounded text-primary-400 block mt-1">
+                          &lt;meta name="google-site-verification" content="..."&gt;
+                        </code>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3">
-                      <span className="bg-accent-500 text-white text-xs px-2 py-1 rounded-full font-bold">2</span>
+                      <span className="bg-primary-500 text-white text-xs px-2 py-1 rounded-full font-bold">2</span>
                       <div>
-                        <p><strong>Update Meta Tag:</strong> Replace "ca-pub-XXXXXXXXXXXXXXXX" in index.html</p>
-                        <p className="text-xs">Or use the Meta Tag field above to generate the correct format</p>
+                        <p><strong>AdSense Account Meta Tag:</strong></p>
+                        <p className="text-xs">AdSense → Account → Account Information</p>
+                        <code className="text-xs bg-dark-surface px-2 py-1 rounded text-primary-400 block mt-1">
+                          &lt;meta name="google-adsense-account" content="ca-pub-..."&gt;
+                        </code>
                       </div>
                     </div>
                     <div className="flex items-start space-x-3">
-                      <span className="bg-accent-500 text-white text-xs px-2 py-1 rounded-full font-bold">3</span>
+                      <span className="bg-primary-500 text-white text-xs px-2 py-1 rounded-full font-bold">3</span>
                       <div>
-                        <p><strong>Update Ads.txt:</strong> Replace content in public/ads.txt with your Publisher ID</p>
-                        <p className="text-xs">Or use the Ads.txt Content field above to generate the correct format</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <span className="bg-accent-500 text-white text-xs px-2 py-1 rounded-full font-bold">4</span>
-                      <div>
-                        <p><strong>Verify Access:</strong> Check that https://yoursite.com/ads.txt shows your content</p>
-                        <p className="text-xs">This file must be accessible from your website's root directory</p>
+                        <p><strong>Ads.txt Content:</strong></p>
+                        <p className="text-xs">AdSense → Sites → View ads.txt</p>
+                        <code className="text-xs bg-dark-surface px-2 py-1 rounded text-primary-400 block mt-1">
+                          google.com, pub-123456789, DIRECT, f08c47fec0942fa0
+                        </code>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Additional Information */}
-                <div className="bg-dark-surface p-4 rounded-lg">
-                  <h4 className="font-medium text-dark-text mb-2 flex items-center">
-                    <ApperIcon name="Info" size={16} className="mr-2" />
-                    Additional Notes
+                {/* How It Works */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-dark-text mb-3 flex items-center">
+                    <ApperIcon name="Settings" size={16} className="mr-2 text-secondary-500" />
+                    How This Tool Works
                   </h4>
-                  <div className="space-y-2 text-xs text-dark-muted">
-                    <div>
-                      <strong>Publisher ID:</strong> Your unique AdSense account identifier (never changes)
+                  <div className="space-y-3 text-sm text-dark-muted">
+                    <div className="flex items-start space-x-3">
+                      <ApperIcon name="Copy" size={16} className="text-secondary-500 mt-0.5" />
+                      <div>
+                        <p><strong>Paste Everything:</strong> Copy all AdSense codes and paste them in the text box above</p>
+                      </div>
                     </div>
-                    <div>
-                      <strong>Ad Unit IDs:</strong> Specific ad placement identifiers from your AdSense dashboard
+                    <div className="flex items-start space-x-3">
+                      <ApperIcon name="Cpu" size={16} className="text-secondary-500 mt-0.5" />
+                      <div>
+                        <p><strong>Auto-Detection:</strong> The system automatically identifies meta tags, ads.txt content, and publisher IDs</p>
+                      </div>
                     </div>
-                    <div>
-                      <strong>Verification:</strong> Google may take 24-48 hours to verify your site after implementation
+                    <div className="flex items-start space-x-3">
+                      <ApperIcon name="FileCheck" size={16} className="text-secondary-500 mt-0.5" />
+                      <div>
+                        <p><strong>File Updates:</strong> Meta tags are added to index.html, ads.txt content goes to public/ads.txt</p>
+                      </div>
                     </div>
-                    <div>
-                      <strong>Testing:</strong> Use Google AdSense's site verification tool to check implementation
+                    <div className="flex items-start space-x-3">
+                      <ApperIcon name="CheckCircle" size={16} className="text-secondary-500 mt-0.5" />
+                      <div>
+                        <p><strong>Verification Ready:</strong> Your site becomes ready for AdSense approval and verification</p>
+                      </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Important Notes */}
+              <div className="mt-6 p-4 bg-accent-500/10 border border-accent-500/30 rounded-lg">
+                <h4 className="font-medium text-dark-text mb-2 flex items-center">
+                  <ApperIcon name="AlertTriangle" size={16} className="mr-2 text-accent-500" />
+                  Important Notes
+                </h4>
+                <div className="space-y-1 text-xs text-dark-muted">
+                  <p>• You can paste multiple codes at once - the system will sort them automatically</p>
+                  <p>• Make sure your website is deployed and accessible before applying to AdSense</p>
+                  <p>• Google verification can take 24-48 hours after implementing the codes</p>
+                  <p>• Check that yoursite.com/ads.txt shows your content after saving</p>
                 </div>
               </div>
             </div>
